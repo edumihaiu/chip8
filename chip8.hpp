@@ -1,8 +1,12 @@
 #include <cstdint>
 #include <random>
 
+#define VIDEO_WIDTH 64
+#define VIDEO_HEIGHT 32
+
 class Chip8 {
 public:
+
   uint8_t registers[16]{};
   uint8_t memory[4096]{};
   uint16_t stack[16]{};
@@ -43,4 +47,5 @@ public:
 
   Chip8();
   void loadROMtoMemory(char const *filename);
+  void OP_00E0(void);
 };
