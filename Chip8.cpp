@@ -1,4 +1,4 @@
-#include "chip8.hpp"
+#include "Chip8.hpp"
 #include <chrono>
 #include <cstdint>
 #include <cstring>
@@ -57,7 +57,7 @@ void Chip8::OP_1NNN() {
   pc = address;
 }
 
-void Chip8:OP_2NNN() {
+void Chip8::OP_2NNN() {
   stack[sp++] = pc;
   uint16_t address = opcode & 0x0FFFu;
   pc = address;
@@ -185,24 +185,24 @@ void Chip8::OP_9XY0() {
     pc += 2;
 }
 
-void Chip8:OP_ANNN() {
+void Chip8::OP_ANNN() {
   uint16_t NNN = opcode & 0x0FFFu;
   index_register = NNN;
 }
 
-void Chip8:OP_BNNN() {
+void Chip8::OP_BNNN() {
   uint16_t NNN = opcode & 0x0FFFu;
   pc = registers[0x0u] + NNN;
 }
 
-void Chip8:OP_CXNN() {
+void Chip8::OP_CXNN() {
   uint8_t Vx = (opcode & 0x0F00u) >> 8u;
   uint8_t NN = opcode & 0x00FFu;
 
-  registers[Vx] = randByte + NN;
+  registers[Vx] = randByte(randGen) & NN;
 }
 
-void Chip8:OP_DXYN() {
+void Chip8::OP_DXYN() {
   uint8_t Vx = (opcode & 0x0F00u) >> 8u;
   uint8_t Vy = (opcode & 0x00F0u) >> 4u;
 
@@ -217,7 +217,7 @@ void Chip8:OP_DXYN() {
 
     for (unsigned int col = 0; col < 8; ++col) {
       uint8_t spritePixel = spriteByte & (0x80u >> col);
-      uint32_t *screenPixel = &video[(yPos + row) * VIDEO_WIDTH + (xPOS + col)];
+      uint32_t *screenPixel = &video[(yPos + row) * VIDEO_WIDTH + (xPos + col)];
       
       // screenpixel on
       if (spritePixel) {
@@ -231,7 +231,7 @@ void Chip8:OP_DXYN() {
   }
 }
 
-void Chip8:OP_EX9E() {
+void Chip8::OP_EX9E() {
   uint8_t Vx = (opcode & 0x0F00u) >> 8u;
   uint8_t key = registers[Vx];
 
@@ -240,7 +240,7 @@ void Chip8:OP_EX9E() {
   }
 }
 
-void Chip8:OP_EXA1() {
+void Chip8::OP_EXA1() {
   uint8_t Vx = (opcode & 0x0F00u) >> 8u;
   uint8_t key = registers[Vx];
 
@@ -249,13 +249,13 @@ void Chip8:OP_EXA1() {
   }
 }
 
-void Chip8:OP_FX07() {
+void Chip8::OP_FX07() {
   uint8_t Vx = (opcode & 0x0F00u) >> 8u;
 
   registers[Vx] = delayTimer;
 }
 
-void Chip8::OP_Fx0A()
+void Chip8::OP_FX0A()
 {
 	uint8_t Vx = (opcode & 0x0F00u) >> 8u;
   for (uint8_t i = 0; i < 16; ++i) {
@@ -291,7 +291,7 @@ void Chip8::OP_FX29()
   uint8_t Vx = (opcode & 0x0F00u) >> 8u;
   uint8_t digit = registers[Vx];
 
-  index = FONT_START_ADDRESS + (5 * digit);
+  index_register = FONT_START_ADDRESS + (5 * digit);
 }
 
 void Chip8::OP_FX33()
@@ -324,4 +324,142 @@ void Chip8::OP_FX65()
   {
     registers[i] = memory[index_register + i];
   }
+}
+
+void Chip8::Cycle() {
+  //fetch
+  opcode = (memory[pc] << 8u) | memory[pc + 1];
+  pc += 2;
+
+  //decode
+  uint16_t category = opcode & 0xF000;
+
+  switch(category) {
+    case 0x0000:
+      switch (opcode) {
+        case 0x00E0:
+          OP_00E0();
+          break;
+        case 0x00EE:
+          OP_00EE();
+          break;
+        default:
+          break;
+      }
+    break;
+    case 0x1000:
+      OP_1NNN();
+      break;
+    case 0x2000:
+      OP_2NNN();
+      break;
+    case 0x3000:
+      OP_3XNN();
+      break;
+    case 0x4000:
+      OP_4XNN();
+      break;
+    case 0x5000:
+      OP_5XY0();
+      break;
+    case 0x6000:
+      OP_6XNN();
+      break;
+    case 0x7000:
+      OP_7XNN();
+      break;
+    case 0x8000:
+      switch (opcode & 0x000F) {
+        case 0x0000:
+          OP_8XY0();
+          break;
+        case 0x0001:
+          OP_8XY1();
+          break;
+        case 0x0002:
+          OP_8XY2();
+          break;
+        case 0x0003:
+          OP_8XY3();
+          break;
+        case 0x0004:
+          OP_8XY4();
+          break;
+        case 0x0005:
+          OP_8XY5();
+          break;
+        case 0x0006:
+          OP_8XY6();
+          break;
+        case 0x0007:
+          OP_8XY7();
+          break;
+        case 0x000E:
+          OP_8XYE();
+          break;
+        default:
+          break;
+      }
+    case 0x9000:
+      OP_9XY0();
+      break;
+    case 0xA000:
+      OP_ANNN();
+      break;
+    case 0xB000:
+      OP_BNNN();
+      break;
+    case 0xC000:
+      OP_CXNN();
+      break;
+    case 0xD000:
+      OP_DXYN();
+      break;  
+    case 0xE000:
+      switch (opcode & 0x00FF) {
+        case 0x009E:
+          OP_EX9E();
+          break;
+        case 0x00A1:
+          OP_EXA1();
+          break;
+        default:
+          break;
+      }
+    case 0xF000:
+      switch (opcode & 0x00FF) {
+        case 0x0007:
+          OP_FX07();
+          break;
+        case 0x000A:
+          OP_FX0A();
+          break;
+        case 0x0015:
+          OP_FX15();
+          break;
+        case 0x0018:
+          OP_FX18();
+          break;
+        case 0x001E:
+          OP_FX1E();
+          break;
+        case 0x0029:
+          OP_FX29();
+          break;
+        case 0x0033:
+          OP_FX33();
+          break;
+        case 0x0055:
+          OP_FX55();
+          break;
+        case 0x0065:
+          OP_FX65();
+          break;
+        default:
+          break;
+      }
+    default:
+      break;
+  }
+
 }

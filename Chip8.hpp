@@ -1,3 +1,6 @@
+#ifndef CHIP8_HPP
+#define CHIP8_HPP
+
 #include <cstdint>
 #include <random>
 
@@ -21,7 +24,7 @@ public:
 
   // rng
   std::default_random_engine randGen;
-  std::uniform_int_distribution<uint8_t> randByte;
+  std::uniform_int_distribution<uint8_t> randByte{0, 255};
 
   static inline constexpr unsigned int MEM_START_ADDRESS = 0x200;
   static inline constexpr unsigned int FONT_START_ADDRESS = 0x50;
@@ -47,5 +50,42 @@ public:
 
   Chip8();
   void loadROMtoMemory(char const *filename);
-  void OP_00E0(void);
+  void Cycle(void);
+private:
+  void OP_00E0();
+  void OP_00EE();
+  void OP_2NNN();
+  void OP_3XNN();
+  void OP_4XNN();
+  void OP_5XY0();
+  void OP_6XNN();
+  void OP_7XNN();
+  void OP_8XY0();
+  void OP_8XY1();
+  void OP_8XY2();
+  void OP_8XY3();
+  void OP_8XY4();
+  void OP_8XY5();
+  void OP_8XY6();
+  void OP_8XY7();
+  void OP_8XYE();
+  void OP_9XY0();
+  void OP_ANNN();
+  void OP_BNNN();
+  void OP_CXNN();
+  void OP_DXYN();
+  void OP_EX9E();
+  void OP_EXA1();
+  void OP_FX07();
+  void OP_FX0A();
+  void OP_FX15();
+  void OP_FX18();
+  void OP_FX1E();
+  void OP_FX29();
+  void OP_FX33();
+  void OP_FX55();
+  void OP_FX65();
+  void OP_1NNN();
 };
+
+#endif
